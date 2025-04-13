@@ -43,26 +43,23 @@ async function render() {
   const sorted = [...filtered].sort((a, b) => new Date(a.start) - new Date(b.start));
 
   for (const e of sorted) {
-    const start = new Date(e.start);
-    const end = e.end ? new Date(e.end) : new Date();
+    const start = new Date(new Date(e.start).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
+    const end = e.end
+      ? new Date(new Date(e.end).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }))
+      : new Date();
+  
     const top = Math.floor((start - startBase) / 60000);
     const height = Math.max(100, Math.floor((end - start) / 60000));
-
+  
     let slot = 0;
     while (slots[slot] && new Date(slots[slot]) > start) slot++;
     slots[slot] = end;
-
+  
     const card = createCard(e);
     card.style.top = `${top}px`;
     card.style.left = `${slot * 200}px`;
     card.style.height = `${height}px`;
     cardsArea.appendChild(card);
-  }
-
-  timeline.appendChild(timeLabels);
-  timeline.appendChild(cardsArea);
-  output.appendChild(timeline);
-}
 
 function createCard(e, isLiveNow = false) {
   const card = document.createElement('div');
