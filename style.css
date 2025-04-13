@@ -36,7 +36,7 @@ body {
 }
 
 .time-label {
-  height: 60px;
+  height: 57px;
   border-bottom: 1px solid #eee;
   display: flex;
   justify-content: flex-end;
