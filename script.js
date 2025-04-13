@@ -5,12 +5,20 @@ async function render() {
   const output = document.getElementById('output');
   const liveNow = document.getElementById('liveNow');
 
+  // ✅ タイムライン基準：前日0:00 JST
   const startBase = new Date();
   startBase.setDate(startBase.getDate() - 1);
   startBase.setHours(0, 0, 0, 0);
+
+  // ✅ 48時間分の上限
   const endLimit = new Date(startBase.getTime() + 48 * 60 * 60 * 1000);
 
-  const filtered = events.filter(e => new Date(e.start) >= startBase && new Date(e.start) < endLimit);
+  // ✅ JSTでフィルタ
+  const toJST = str => new Date(new Date(str).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
+  const filtered = events.filter(e => {
+    const start = toJST(e.start);
+    return start >= startBase && start < endLimit;
+  });
 
   // 🔴 LIVE中カード（上部）
   filtered.filter(e => !e.end).forEach(e => {
@@ -20,7 +28,7 @@ async function render() {
     liveNow.appendChild(card);
   });
 
-  // 📅 タイムライン
+  // 📅 タイムライン構造
   const timeline = document.createElement('div');
   timeline.className = 'timeline';
 
@@ -43,23 +51,26 @@ async function render() {
   const sorted = [...filtered].sort((a, b) => new Date(a.start) - new Date(b.start));
 
   for (const e of sorted) {
-    const start = new Date(new Date(e.start).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
-    const end = e.end
-      ? new Date(new Date(e.end).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }))
-      : new Date();
-  
+    const start = toJST(e.start);
+    const end = e.end ? toJST(e.end) : new Date();
     const top = Math.floor((start - startBase) / 60000);
     const height = Math.max(100, Math.floor((end - start) / 60000));
-  
+
     let slot = 0;
     while (slots[slot] && new Date(slots[slot]) > start) slot++;
     slots[slot] = end;
-  
+
     const card = createCard(e);
     card.style.top = `${top}px`;
     card.style.left = `${slot * 200}px`;
     card.style.height = `${height}px`;
     cardsArea.appendChild(card);
+  }
+
+  timeline.appendChild(timeLabels);
+  timeline.appendChild(cardsArea);
+  output.appendChild(timeline);
+}
 
 function createCard(e, isLiveNow = false) {
   const card = document.createElement('div');
