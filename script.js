@@ -1,128 +1,139 @@
-async function render() {
-  const res = await fetch('https://script.google.com/macros/s/AKfycbySEee02uqMKRC0sfKjmFkTZCTPSd6J2snnCTJceBnvCTvENgtG5kHkmeqlBLOWePc/exec');
-  const events = await res.json();
 
-  const output = document.getElementById('output');
-  const liveNow = document.getElementById('liveNow');
+  <script>
+    let startBase = new Date();
 
-  // ✅ タイムライン基準：前日0:00 JST
-  const startBase = new Date();
-  startBase.setDate(startBase.getDate() - 1);
-  startBase.setHours(0, 0, 0, 0);
+    function toJST(str) {
+      return new Date(new Date(str).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
+    }
 
-  // ✅ 48時間分の上限
-  const endLimit = new Date(startBase.getTime() + 48 * 60 * 60 * 1000);
+    async function render(startDate = null) {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbySEee02uqMKRC0sfKjmFkTZCTPSd6J2snnCTJceBnvCTvENgtG5kHkmeqlBLOWePc/exec');
+      const events = await res.json();
 
-  // ✅ JSTでフィルタ
-  const toJST = str => new Date(new Date(str).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
-  const filtered = events.filter(e => {
-    const start = toJST(e.start);
-    return start >= startBase && start < endLimit;
-  });
+      const output = document.getElementById('output');
+      const liveNow = document.getElementById('liveNow');
+      output.innerHTML = '';
+      liveNow.innerHTML = '';
 
-  // 🔴 LIVE中カード（上部）
-  filtered.filter(e => !e.end).forEach(e => {
-    const card = createCard(e, true);
-    card.style.height = '100px';
-    card.style.position = 'relative';
-    liveNow.appendChild(card);
-  });
+      startBase = startDate || new Date();
+      startBase.setHours(0, 0, 0, 0);
+      startBase.setDate(startBase.getDate() - 1);
 
-  // 📅 タイムライン構造
-  const timeline = document.createElement('div');
-  timeline.className = 'timeline';
+      const endLimit = new Date(startBase.getTime() + 48 * 60 * 60 * 1000);
 
-  const timeLabels = document.createElement('div');
-  timeLabels.className = 'time-labels';
+      const filtered = events.filter(e => {
+        const start = toJST(e.start);
+        return start >= startBase && start < endLimit;
+      });
 
-  for (let h = 0; h <= 48; h++) {
-    const time = new Date(startBase.getTime() + h * 60 * 60 * 1000);
-    const hour = time.getHours().toString().padStart(2, '0');
-    const label = document.createElement('div');
-    label.className = 'time-label';
-    label.textContent = hour === '00' ? `${time.getMonth() + 1}/${time.getDate()}` : `${hour}:00`;
-    timeLabels.appendChild(label);
-  }
+      filtered.filter(e => !e.end).forEach(e => {
+        const card = createCard(e, true);
+        card.style.height = '100px';
+        card.style.position = 'relative';
+        liveNow.appendChild(card);
+      });
 
-  const cardsArea = document.createElement('div');
-  cardsArea.className = 'cards-area';
+      const timeline = document.createElement('div');
+      timeline.className = 'timeline';
 
-  const slots = [];
-  const sorted = [...filtered].sort((a, b) => new Date(a.start) - new Date(b.start));
+      const timeLabels = document.createElement('div');
+      timeLabels.className = 'time-labels';
 
-  for (const e of sorted) {
-    const start = toJST(e.start);
-    const end = e.end ? toJST(e.end) : new Date();
-    const top = Math.floor((start - startBase) / 60000);
-    const height = Math.max(100, Math.floor((end - start) / 60000));
+      for (let h = 0; h <= 48; h++) {
+        const time = new Date(startBase.getTime() + h * 60 * 60 * 1000);
+        const hour = time.getHours().toString().padStart(2, '0');
+        const label = document.createElement('div');
+        label.className = 'time-label';
+        label.textContent = hour === '00' ? `${time.getMonth() + 1}/${time.getDate()}` : `${hour}:00`;
+        timeLabels.appendChild(label);
+      }
 
-    let slot = 0;
-    while (slots[slot] && new Date(slots[slot]) > start) slot++;
-    slots[slot] = end;
+      const cardsArea = document.createElement('div');
+      cardsArea.className = 'cards-area';
 
-    const card = createCard(e);
-    card.style.top = `${top}px`;
-    card.style.left = `${slot * 200}px`;
-    card.style.height = `${height}px`;
-    cardsArea.appendChild(card);
-  }
+      const slots = [];
+      const sorted = [...filtered].sort((a, b) => new Date(a.start) - new Date(b.start));
 
-  timeline.appendChild(timeLabels);
-  timeline.appendChild(cardsArea);
-  output.appendChild(timeline);
-}
+      for (const e of sorted) {
+        const start = toJST(e.start);
+        const end = e.end ? toJST(e.end) : new Date();
+        const top = Math.floor((start - startBase) / 60000);
+        const height = Math.max(100, Math.floor((end - start) / 60000));
 
-function createCard(e, isLiveNow = false) {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.style.backgroundColor = e.color || '#fff';
+        let slot = 0;
+        while (slots[slot] && new Date(slots[slot]) > start) slot++;
+        slots[slot] = end;
 
-  const iconArea = document.createElement('div');
-  iconArea.className = 'card-icon-area';
+        const card = createCard(e);
+        card.style.top = `${top}px`;
+        card.style.left = `${slot * 200}px`;
+        card.style.height = `${height}px`;
+        cardsArea.appendChild(card);
+      }
 
-  const icon = document.createElement('img');
-  icon.src = e.icon;
-  icon.alt = 'icon';
-  icon.className = 'icon';
+      timeline.appendChild(timeLabels);
+      timeline.appendChild(cardsArea);
+      output.appendChild(timeline);
+    }
 
-  const siteLink = document.createElement('a');
-  siteLink.href = e.url;
-  siteLink.target = '_blank';
-  siteLink.className = 'site-icon-link';
+    function createCard(e, isLiveNow = false) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.backgroundColor = e.color || '#fff';
 
-  const siteIcon = document.createElement('img');
-  siteIcon.src = e.site === 'Twitch'
-    ? 'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png'
-    : 'https://www.google.com/s2/favicons?domain=youtube.com&sz=32';
-  siteLink.appendChild(siteIcon);
+      const iconArea = document.createElement('div');
+      iconArea.className = 'card-icon-area';
 
-  iconArea.appendChild(icon);
-  iconArea.appendChild(siteLink);
+      const icon = document.createElement('img');
+      icon.src = e.icon;
+      icon.alt = 'icon';
+      icon.className = 'icon';
 
-  const content = document.createElement('div');
-  content.className = 'card-content';
+      const siteLink = document.createElement('a');
+      siteLink.href = e.url;
+      siteLink.target = '_blank';
+      siteLink.className = 'site-icon-link';
 
-  if (!e.end) {
-    const liveLabel = document.createElement('div');
-    liveLabel.className = 'live-label';
-    liveLabel.textContent = 'LIVE中';
-    content.appendChild(liveLabel);
-  }
+      const siteIcon = document.createElement('img');
+      siteIcon.src = e.site === 'Twitch'
+        ? 'https://static.twitchcdn.net/assets/favicon-32-e29e246c157142c94346.png'
+        : 'https://www.google.com/s2/favicons?domain=youtube.com&sz=32';
+      siteLink.appendChild(siteIcon);
 
-  const name = document.createElement('div');
-  name.className = 'card-name';
-  name.textContent = e.name;
+      iconArea.appendChild(icon);
+      iconArea.appendChild(siteLink);
 
-  const title = document.createElement('div');
-  title.className = 'card-title';
-  title.textContent = e.title;
+      const content = document.createElement('div');
+      content.className = 'card-content';
 
-  content.appendChild(name);
-  content.appendChild(title);
+      if (!e.end) {
+        const liveLabel = document.createElement('div');
+        liveLabel.className = 'live-label';
+        liveLabel.textContent = 'LIVE中';
+        content.appendChild(liveLabel);
+      }
 
-  card.appendChild(iconArea);
-  card.appendChild(content);
-  return card;
-}
+      const name = document.createElement('div');
+      name.className = 'card-name';
+      name.textContent = e.name;
 
-render();
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.textContent = e.title;
+
+      content.appendChild(name);
+      content.appendChild(title);
+
+      card.appendChild(iconArea);
+      card.appendChild(content);
+      return card;
+    }
+
+    function navigate(offsetDays) {
+      const newStart = new Date(startBase);
+      newStart.setDate(startBase.getDate() + offsetDays);
+      render(newStart);
+    }
+
+    render();
+  </script>
