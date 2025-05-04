@@ -21,7 +21,7 @@
 
       startBase = startDate || new Date();
       startBase.setHours(0, 0, 0, 0);
-      startBase.setDate(startBase.getDate() - 2);
+      startBase.setDate(startBase.getDate() - 1);
 
       const endLimit = new Date(startBase.getTime() + 48 * 60 * 60 * 1000);
 
