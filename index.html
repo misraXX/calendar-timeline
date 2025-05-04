@@ -4,20 +4,26 @@
   <meta charset="UTF-8">
   <title>配信タイムライン</title>
   <link rel="stylesheet" href="style.css">
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3X0DK4QZ1V"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-3X0DK4QZ1V');
   </script>
+
 </head>
 <body>
   <h2>配信タイムライン</h2>
   <div class="live-now-title">🔴 LIVE中の配信</div>
   <div id="liveNow" class="live-now-row"></div>
+
+  <div id="controls">
+    <button onclick="navigate(-1)">← 前日</button>
+    <button onclick="navigate(1)">翌日 →</button>
+  </div>
+
   <div id="output"></div>
 
-  <script src="script.js"></script>
 </body>
 </html>
