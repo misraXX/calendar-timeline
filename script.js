@@ -1,10 +1,16 @@
+let startBase = new Date();
+
+function toJST(str) {
+  return new Date(new Date(str).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
+}
 async function render() {
   const res = await fetch('https://script.google.com/macros/s/AKfycbySEee02uqMKRC0sfKjmFkTZCTPSd6J2snnCTJceBnvCTvENgtG5kHkmeqlBLOWePc/exec');
   const events = await res.json();
 
   const output = document.getElementById('output');
   const liveNow = document.getElementById('liveNow');
-
+  output.innerHTML = '';
+  liveNow.innerHTML = '';
   // ✅ タイムライン基準：前日0:00 JST
   const startBase = new Date();
   startBase.setDate(startBase.getDate() - 1);
