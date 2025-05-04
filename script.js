@@ -1,4 +1,4 @@
-let startBase = new Date();
+let startBase = new Date(today()-1);
 
 function toJST(str) {
   return new Date(new Date(str).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
